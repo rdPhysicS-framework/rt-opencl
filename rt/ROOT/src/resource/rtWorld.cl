@@ -1,18 +1,11 @@
-typedef struct
-{
-	int width;
-	int height;
-	RT_Vec2f sp;
-	RT_SScoord coord;
-} RT_ViewPlane;
-
 RT_Result Hit(__constant RT_Sphere *spheres, const int numObj, const RT_Ray *ray)
 {
 	RT_Result r = CreateResult();
+	RT_Vec3f normal;
+	RT_Vec3f hp;
 
 	float tmin = INFINITE;
 	float t;
-
 	for(int i = 0; i < numObj; i++)
 	{
 		RT_Sphere s = spheres[i];
@@ -20,12 +13,15 @@ RT_Result Hit(__constant RT_Sphere *spheres, const int numObj, const RT_Ray *ray
 		{
 			tmin = t;
 			r.hit = true;
+			r.material = s.material;
+			normal = r.normal;
+			hp = r.lhitPoint;
 		}	
 	}
 	if(r.hit)
 	{ 
-		float cosfactor = dot(r.normal, ray->d) * -1;
-		r.color = (RT_Vec3f)(0.5f, 0.7f, 0.8f) * cosfactor;
+		r.normal = normal;
+		r.lhitPoint = hp;
 	}
 
 	return r;
@@ -46,9 +42,11 @@ bool ShadowHit(__constant RT_Sphere *spheres, const int numObj, RT_Ray *ray, flo
 	return false;
 }
 
-RT_Vec3f TraceRay(__constant RT_Sphere *spheres, const int numObj, const RT_Ray *ray)
+RT_Vec3f TraceRay(__constant RT_Sphere *spheres, 
+				  const int numObj, 
+				  const RT_Ray *ray)
 {
 	RT_Result r = Hit(spheres, numObj, ray);
-	return r.hit? r.color : (RT_Vec3f)(0.0f);
+	return r.hit? r.material.color : (RT_Vec3f)(0.0f);
 }
 

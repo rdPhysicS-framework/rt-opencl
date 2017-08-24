@@ -1,10 +1,3 @@
-typedef struct
-{
-	RT_Vec3f position;
-	RT_Vec3f color;
-	float ls;
-} RT_Light;
-
 /*----------------------------------------------------------------------------------------------
  *
  * Methods of the PointLight

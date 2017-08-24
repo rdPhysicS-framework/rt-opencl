@@ -1,33 +1,3 @@
-typedef struct
-{
-	RT_Vec3f center;
-	float radius;
-} RT_Sphere;
-
-typedef struct
-{
-	RT_Vec3f normal;
-	float distance;
-} RT_Plane;
-
-typedef struct
-{
-	RT_Vec3f position;
-	RT_Vec3f size;
-} RT_Box;
-
-typedef struct 
-{
-	bool hit;
-	float t;
-	RT_Vec3f whitPoint;
-	RT_Vec3f lhitPoint;
-	RT_Vec3f normal;
-	RT_Vec3f color;
-	RT_Ray *ray;
-	int depth;
-} RT_Result;
-
 /*----------------------------------------------------------------------------------------------
  *
  * Result
@@ -37,8 +7,9 @@ RT_Result CreateResult()
 { 
 	RT_Result r;
 	r.hit = false;
-	r.ray = 0;
-	r.color = (RT_Vec3f)(0.0f);
+	//r.ray = 0;
+	//r.color = (RT_Vec3f)(0.0f);
+	//r.material.color = (RT_Vec3f)(0.0f);
 	return r;
 }
 
@@ -114,7 +85,7 @@ inline bool Plane_ShadowHit(const RT_Plane *p, const RT_Ray *ray, float *tmin)
 
 	if(d != 0)
 	{
-		t = -(dot(p->normal, ray->o) + p->distance) / d;
+		t = -(dot(p->normal, ray->o) + p->dist) / d;
 
 		if(t > 0.0 && t < *tmin)
 		{

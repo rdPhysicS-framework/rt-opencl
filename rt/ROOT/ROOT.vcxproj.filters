@@ -15,20 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\resource\rtGeometricObject.cl" />
     <None Include="src\resource\rtMath.cl" />
     <None Include="src\resource\rtUtil.cl" />
     <None Include="src\resource\rtWorld.cl" />
-    <None Include="src\resource\rtMaterial.cl" />
     <None Include="src\resource\rtKernel.cl" />
     <None Include="src\resource\rtTracer.cl" />
+    <None Include="src\resource\rtStruct.cl" />
+    <None Include="src\resource\rtGeometricObject.cl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\resource\rtLights.cl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\assets\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\Info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

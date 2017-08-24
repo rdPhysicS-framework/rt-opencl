@@ -6,7 +6,7 @@
 
 #define RANDMAX 0x7FFF
 
-#define INFINITE 10000000.0
+#define INFINITE 1000000000.0
 
 #define EPSILON 0.0001
 
@@ -24,63 +24,6 @@
 
 #define TO_DEG (ANGLE/PI)
 #define TO_RAD  (PI/ANGLE)
-
-typedef enum
-{
-	RT_NORMAL,
-	RT_RAYTRACING,
-	RT_OPENGL
-} RT_SScoord;
-
-typedef enum
-{
-	RT_RAY_CAST,
-	RT_WHITTED,
-	RT_AREA_LIGHT_TRACER,
-	RT_AREA_LIGHT_TRACER_WHITTED,
-	RT_PATH_TRACER
-} RT_TypeTracer;
-
-typedef enum
-{
-	RT_PHONG,
-	RT_REFLECTIVE,
-	RT_TRANSPARENT
-} RT_TypeMaterial;
-
-typedef enum
-{
-	RT_AREA_LIGHT,
-	RT_DIRECTIONAL_LIGHT,
-	RT_POINT_LIGHT
-} RT_TypeLight;
-
-typedef enum
-{
-	RT_PINHOLE_CAMERA,
-	RT_THIN_LENS_CAMERA
-} RT_TypeCamera;
-
-typedef enum
-{
-	RT_CUBE,
-	RT_PLANE,
-	RT_SPHERE,
-	RT_TRIANGLE
-} RT_TypeGeometric;
-
-typedef enum
-{
-	RT_SPHERE_LAMP,
-	RT_RECTANGLE_LAMP,
-	RT_CIRCLE_LAMP
-} RT_TypeLamp;
-
-typedef enum 
-{
-	RT_FLAT,
-	RT_SMOOTH
-} RT_TypeTriangle;
 
 static inline float toRadians(const float degrees)
 {
@@ -141,7 +84,7 @@ inline RT_Mat4f null()
 				  0, 0, 0, 0 );
 }
 
-inline RT_Mat4f copy(const RT_Mat4f *a)
+RT_Mat4f copy(const RT_Mat4f *a)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -317,7 +260,7 @@ inline RT_Mat4f affInvScalingF(const float x, const float y, const float z)
 }
 
 
-inline RT_Mat4f add(const RT_Mat4f *a, const RT_Mat4f *b)
+RT_Mat4f add(const RT_Mat4f *a, const RT_Mat4f *b)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -327,7 +270,7 @@ inline RT_Mat4f add(const RT_Mat4f *a, const RT_Mat4f *b)
 	return r;
 }
 
-inline RT_Mat4f addS(const RT_Mat4f *a, const float s)
+RT_Mat4f addS(const RT_Mat4f *a, const float s)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -337,7 +280,7 @@ inline RT_Mat4f addS(const RT_Mat4f *a, const float s)
 	return r;
 }
 
-inline RT_Mat4f sub(const RT_Mat4f *a, const RT_Mat4f *b)
+RT_Mat4f sub(const RT_Mat4f *a, const RT_Mat4f *b)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -347,7 +290,7 @@ inline RT_Mat4f sub(const RT_Mat4f *a, const RT_Mat4f *b)
 	return r;
 }
 
-inline RT_Mat4f subS(const RT_Mat4f *a, const float s)
+RT_Mat4f subS(const RT_Mat4f *a, const float s)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -357,7 +300,7 @@ inline RT_Mat4f subS(const RT_Mat4f *a, const float s)
 	return r;
 }
 
-inline RT_Mat4f mul(const RT_Mat4f *a, const RT_Mat4f *b)
+RT_Mat4f mul(const RT_Mat4f *a, const RT_Mat4f *b)
 {
 	RT_Mat4f r = null();
 
@@ -369,7 +312,7 @@ inline RT_Mat4f mul(const RT_Mat4f *a, const RT_Mat4f *b)
 	return r;
 }
 
-inline RT_Mat4f mulS(const RT_Mat4f *a, const float s)
+RT_Mat4f mulS(const RT_Mat4f *a, const float s)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -379,7 +322,7 @@ inline RT_Mat4f mulS(const RT_Mat4f *a, const float s)
 	return r;
 }
 
-inline RT_Mat4f div(const RT_Mat4f *a, const float s)
+RT_Mat4f div(const RT_Mat4f *a, const float s)
 {
 	RT_Mat4f r;
 	for(int i = 0; i < SIZE_MATRIX; i++)
@@ -422,9 +365,9 @@ inline RT_Vec3f reflect(const RT_Vec3f *v, const RT_Vec3f *n)
 {
 	float d = dot(*v, *n);
 
-	return (RT_Vec3f)(v->x - 2.0 * d * n->x,
-					  v->y - 2.0 * d * n->y,
-					  v->z - 2.0 * d * n->z );
+	return (RT_Vec3f)(v->x - 2.0f * d * n->x,
+					  v->y - 2.0f * d * n->y,
+					  v->z - 2.0f * d * n->z );
 }
 
 inline RT_Vec3f refract(const RT_Vec3f *v, const RT_Vec3f *n, const float i)
@@ -449,7 +392,7 @@ inline RT_Vec3f lerp(const RT_Vec3f *a, const RT_Vec3f *b, const float t)
 					  a->z + (b->z - a->z) * t );
 }
 
-inline void swap(__global RT_Vec3f *a, const RT_Vec3f *b)
+inline void swap(RT_Vec3f *a, const RT_Vec3f *b)
 {
 	a->x = b->x;
 	a->y = b->y;
@@ -531,9 +474,9 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
 	return c;
  }
 
- inline void Saturate(RT_Color *c)
+ inline void Saturate(RT_Vec3f *c)
  {
-	c->ri = (c->ri < 0)? 0 : (c->ri > 255)? 255 : c->ri;
+	/*c->ri = (c->ri < 0)? 0 : (c->ri > 255)? 255 : c->ri;
 	c->gi = (c->gi < 0)? 0 : (c->gi > 255)? 255 : c->gi;
 	c->bi = (c->bi < 0)? 0 : (c->bi > 255)? 255 : c->bi;
 	c->ai = (c->ai < 0)? 0 : (c->ai > 255)? 255 : c->ai;
@@ -546,7 +489,11 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
 	c->rgba = (((c->ri & 0xFF) << RSHIFT) |
 			   ((c->gi & 0xFF) << GSHIFT) |
 			   ((c->bi & 0xFF) << BSHIFT) |
-			   ((c->ai & 0xFF) << ASHIFT)  );
+			   ((c->ai & 0xFF) << ASHIFT)  );*/
+
+	c->x = (c->x < 0)? 0 : (c->x > 1)? 1 : c->x;
+	c->y = (c->y < 0)? 0 : (c->y > 1)? 1 : c->y;
+	c->z = (c->z < 0)? 0 : (c->z > 1)? 1 : c->z;
  }
 
 /*----------------------------------------------------------------------------------------------
