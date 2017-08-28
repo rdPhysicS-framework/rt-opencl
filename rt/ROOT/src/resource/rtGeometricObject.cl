@@ -42,7 +42,7 @@ bool Sphere_ShadowHit(const RT_Sphere *s, const RT_Ray *ray, float *tmin)
 	float denom = 2.0 * a;
 	float t = (-b - e) / denom;
 
-	if(t > EPSILON)
+	if(t > 0.01)
 	{
 		*tmin = t;
 		return true;
@@ -50,7 +50,7 @@ bool Sphere_ShadowHit(const RT_Sphere *s, const RT_Ray *ray, float *tmin)
 
 	t = (-b + e) / denom;
 
-	if(t > EPSILON)
+	if(t > 0.01)
 	{
 		*tmin = t;
 		return true;
@@ -78,25 +78,20 @@ bool Sphere_Hit(const RT_Sphere *s, const RT_Ray *ray, float *tmin, RT_Result *r
  *
  *----------------------------------------------------------------------------------------------*/
 
-inline bool Plane_ShadowHit(const RT_Plane *p, const RT_Ray *ray, float *tmin)
+bool Plane_ShadowHit(const RT_Plane *p, const RT_Ray *ray, float *tmin)
 {
-	float d = dot(p->normal, ray->d);
-	float t = *tmin;
+	float t = dot((p->point - ray->o), p->normal) / dot(ray->d, p->normal);
 
-	if(d != 0)
-	{
-		t = -(dot(p->normal, ray->o) + p->dist) / d;
-
-		if(t > 0.0 && t < *tmin)
-		{
-			*tmin = t;
-			return true;
-		}
+	if(t > 0.001)
+	{ 
+		*tmin = t;
+		return true;
 	}
-	return true;
+
+	return false;
 }
 
-inline bool Plane_Hit(const RT_Plane *p, const RT_Ray *ray, float *tmin, RT_Result *r)
+bool Plane_Hit(const RT_Plane *p, const RT_Ray *ray, float *tmin, RT_Result *r)
 {
 	if(Plane_ShadowHit(p, ray, tmin))
 	{
@@ -114,7 +109,7 @@ inline bool Plane_Hit(const RT_Plane *p, const RT_Ray *ray, float *tmin, RT_Resu
  *
  *----------------------------------------------------------------------------------------------*/
 
-inline RT_Vec3f Box_Normal(const RT_Box *b, const RT_Vec3f *p)
+RT_Vec3f Box_Normal(const RT_Box *b, const RT_Vec3f *p)
 {
 	float d[6];
 	d[0] = fabs(b->size.x - b->position.x);
@@ -135,15 +130,15 @@ inline RT_Vec3f Box_Normal(const RT_Box *b, const RT_Vec3f *p)
 		}
 	}
 
-	return (b == 0) ? (RT_Vec3f)(-1.0f,  0.0f,  0.0f) :
-		   (b == 0) ? (RT_Vec3f)( 1.0f,  0.0f,  0.0f) :
-		   (b == 0) ? (RT_Vec3f)( 0.0f, -1.0f,  0.0f) :
-		   (b == 0) ? (RT_Vec3f)( 0.0f,  1.0f,  0.0f) :
-		   (b == 0) ? (RT_Vec3f)( 0.0f,  0.0f, -1.0f) :
+	return (f == 0) ? (RT_Vec3f)(-1.0f,  0.0f,  0.0f) :
+		   (f == 1) ? (RT_Vec3f)( 1.0f,  0.0f,  0.0f) :
+		   (f == 2) ? (RT_Vec3f)( 0.0f, -1.0f,  0.0f) :
+		   (f == 3) ? (RT_Vec3f)( 0.0f,  1.0f,  0.0f) :
+		   (f == 4) ? (RT_Vec3f)( 0.0f,  0.0f, -1.0f) :
 		              (RT_Vec3f)( 0.0f,  0.0f,  1.0f)  ;
 }
 
-inline bool Box_ShadowHit(const RT_Box *b, const RT_Ray *ray, float *tmin)
+bool Box_ShadowHit(const RT_Box *b, const RT_Ray *ray, float *tmin)
 {
 	float t[6];
 	RT_Vec3f ip[6];
@@ -158,7 +153,7 @@ inline bool Box_ShadowHit(const RT_Box *b, const RT_Ray *ray, float *tmin)
 		t[i] = -1;
 	}
 
-	RT_Vec3f s = b->position - b->size;
+	RT_Vec3f s = b->position + b->size;
 
 	if(d.x)
 	{
@@ -181,7 +176,7 @@ inline bool Box_ShadowHit(const RT_Box *b, const RT_Ray *ray, float *tmin)
 
 	for(int i = 0; i < 6; i++)
 	{
-		if(t[i] > 0.0f)
+		if(t[i] > 0)
 		{
 			ip[i] = o + d * t[i];
 
@@ -201,7 +196,7 @@ inline bool Box_ShadowHit(const RT_Box *b, const RT_Ray *ray, float *tmin)
 	return hit;
 }
 
-inline bool Box_Hit(const RT_Box *b, const RT_Ray *ray, float *tmin, RT_Result *r)
+bool Box_Hit(const RT_Box *b, const RT_Ray *ray, float *tmin, RT_Result *r)
 {
 	if(Box_ShadowHit(b, ray, tmin))
 	{

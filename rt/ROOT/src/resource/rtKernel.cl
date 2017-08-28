@@ -5,74 +5,61 @@ inline void DisplayPixel(const int x,
 						 __global int *bufferImage)
 { 
 	int invR = w - x - 1;
-	int i = (y * w) + x;
-	/*int rgba = (((pc->x * 255) << RSHIFT) |
-				((pc->y * 255) << GSHIFT) |
-				((pc->z * 255) << BSHIFT) |
-				(0xFF << ASHIFT));*/
+	int i = (y * w) + invR;
 	*(bufferImage + i) = pc->rgba;
 }
 
 __kernel void render(__constant RT_ViewPlane *viewPlane,
-				     __constant RT_Sphere *spheres, 
-					 int sizeSpheres, 
-					 __global int *bufferImage)
+					 __constant RT_Camera *camera,
+					 __global const RT_Light *lights,
+					 __global const RT_Plane *planes,
+				     __global const RT_Sphere *spheres,
+					 __global const RT_Box *box, 
+					 const int numLights,
+					 const int numPlanes, 
+					 const int numSpheres, 
+					 const int numBox,
+					 __global int *bufferImage )
 {
-	RT_ViewPlane vp = *viewPlane;
+	RT_Vec2f s = viewPlane->sp / camera->zoom;
 	unsigned int id = get_global_id(0);
-	unsigned int x = id % vp.width;
-	unsigned int y = id / vp.width;
+	unsigned int x = id % viewPlane->width;
+	unsigned int y = id / viewPlane->width;
+	
+	RT_Vec2f pp = (RT_Vec2f)( s.x * (x - 0.5f * viewPlane->width),
+							 -s.y * (y - 0.5f * viewPlane->height));
 
-	RT_Vec3f p = (RT_Vec3f)( x - 0.5f * (vp.width - 1.0f),
-							 y - 0.5f * (vp.height - 1.0f),
-							-300.0f);
+	RT_Ray ray = CreateRay(camera->eye, GetDirectionRayCam(&pp, camera));
 
-	RT_Ray ray = CreateRay(p, (RT_Vec3f)(0, 0, 1));
-
-	RT_Color pc = CreatePixelColorv3(TraceRay(spheres, sizeSpheres, &ray));
-	//Saturate(&pc);
-	DisplayPixel(x, y, vp.width, &pc, bufferImage);
-}
-
-__kernel void render2(__constant RT_ViewPlane *viewPlane,
-					  __constant RT_Light *lights,
-				      __constant RT_Sphere *spheres, 
-					  const int sizeLights, const int sizeSpheres, 
-					  __global int *bufferImage)
-{
-	RT_ViewPlane vp = *viewPlane;
-	unsigned int id = get_global_id(0);
-	unsigned int x = id % vp.width;
-	unsigned int y = id / vp.width;
-
-	RT_Vec3f p = (RT_Vec3f)( x - 0.5f * (vp.width - 1.0f),
-							 y - 0.5f * (vp.height - 1.0f),
-							-300.0f);
-
-	RT_Ray ray = CreateRay(p, (RT_Vec3f)(0, 0, 1));
-
-	RT_Vec3f cf = _TraceRay(spheres, lights, &ray, sizeLights, sizeSpheres);
+	RT_Vec3f cf = TraceRay(lights, planes, spheres, box, &ray, 
+						   numLights, numPlanes, numSpheres, numBox);
 	Saturate(&cf);
 	RT_Color pc = CreatePixelColorv3(cf);
-	DisplayPixel(x, y, vp.width, &pc, bufferImage);
+	DisplayPixel(x, y, viewPlane->width, &pc, bufferImage);
 }
 
-__kernel void _render(__constant RT_Sphere *spheres, int size, __global int *bufferImage)
+/*__kernel void render2(__constant RT_ViewPlane *viewPlane,
+					 __global const RT_Light *lights,
+					 __global const RT_Plane *planes,
+				     __global const RT_Sphere *spheres, 
+					 const int numLights,
+					 const int numPlanes, 
+					 const int numSpheres, 
+					 __global int *bufferImage )
 {
-	RT_Ray ray = CreateRay((RT_Vec3f)(0), (RT_Vec3f)(0, 0, 1));
-	RT_Color pc;
+	unsigned int id = get_global_id(0);
+	unsigned int x = id % viewPlane->width;
+	unsigned int y = id / viewPlane->width;
 
-	for(int y = 0; y < 1080; y++)
-	{
-		for(int x = 0; x < 1920; x++)
-		{  
-			RT_Vec3f p = (RT_Vec3f)(x - 0.5f * (1920 - 1.0f),
-								    y - 0.5f * (1080 - 1.0f),
-								   -100.0f);
-			ray.o = p;
-			RT_Vec3f c = TraceRay(spheres, size, &ray);
-			pc = CreatePixelColorv3(c);
-			DisplayPixel(x, y, 1920, &pc, bufferImage);
-		}
-	}
-}
+	RT_Vec3f p = (RT_Vec3f)( s.x * (x - 0.5f * viewPlane->width),
+							-s.y * (y - 0.5f * viewPlane->height),
+							-500.0f);*/
+
+	/*RT_Ray ray = CreateRay(p, (RT_Vec3f)(0, 0, 1));
+
+	RT_Vec3f cf = TraceRay(lights, planes, spheres, &ray, 
+						   numLights, numPlanes, numSpheres);
+	Saturate(&cf);
+	RT_Color pc = CreatePixelColorv3(cf);
+	DisplayPixel(x, y, viewPlane->width, viewPlane->height, &pc, bufferImage);
+}*/

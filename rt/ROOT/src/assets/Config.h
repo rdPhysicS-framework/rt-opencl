@@ -2,6 +2,8 @@
 #define	__CONFIG_H__
 
 #include <iostream>
+#include <ostream>
+#include <map>
 
 #ifdef APPLE
 #include <OpenCL/opencl.h>
@@ -23,6 +25,34 @@
 
 typedef cl_float3 RT_Vec3f;
 typedef cl_float2 RT_Vec2f;
+
+inline RT_Vec3f operator+(const RT_Vec3f &v1, const RT_Vec3f &v2)
+{
+	return {v1.x+v2.x, v1.y+v2.y, v1.z+v2.z};
+}
+
+inline RT_Vec3f operator-(const RT_Vec3f &v1, const RT_Vec3f &v2)
+{
+	return{ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+}
+
+inline RT_Vec3f Cross(const RT_Vec3f &v1, const RT_Vec3f &v2)
+{
+	return {(v1.y * v2.z) - (v1.z * v2.y),
+			(v1.z * v2.x) - (v1.x * v2.z),
+			(v1.x * v2.y) - (v1.y * v2.x)};
+}
+inline RT_Vec3f Normalize(const RT_Vec3f &v)
+{
+	float invSize = 1.0f / sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+	return {v.x * invSize, v.y * invSize, v.z * invSize};
+}
+
+std::ostream &operator<<(std::ostream &out, const RT_Vec3f &v)
+{
+	out << "(" << v.x << " - " << v.y << " - " << v.z << ")" << std::endl;
+	return out;
+}
 
 typedef struct
 {
@@ -85,6 +115,23 @@ typedef struct
 
 typedef struct
 {
+	RT_Vec3f point;
+	RT_Vec3f normal;
+	//float dist;
+
+	RT_Material material;
+}RT_Plane;
+
+typedef struct
+{
+	RT_Vec3f position;
+	RT_Vec3f size;
+
+	RT_Material material;
+} RT_Box;
+
+typedef struct
+{
 	RT_Vec3f position;
 	RT_Vec3f color;
 	float ls;
@@ -98,7 +145,49 @@ typedef struct
 	//RT_SScoord coord;
 } RT_ViewPlane;
 
-struct RT_Program {
+typedef struct
+{
+	/*position*/
+	RT_Vec3f eye;
+	RT_Vec3f lookAt;
+	RT_Vec3f up;
+
+	float viewPlaneDistance;
+	float zoom;
+
+	float rollAngle;
+	float exposureTime;
+
+	RT_Vec3f u, v, w;
+
+
+	void computeUVW()
+	{
+		w = Normalize(eye - lookAt);
+		
+		if (eye.x == lookAt.x && eye.z == lookAt.z && eye.y > lookAt.y)
+		{
+			u = {0, 0, 1};
+			v = {1, 0, 0};
+			w = {0, 1, 0};
+			return;
+		}
+
+		if (eye.x == lookAt.x && eye.z == lookAt.z && eye.y < lookAt.y)
+		{
+			u = {1, 0, 0};
+			v = {0, 0, 1};
+			w = {0, -1, 0};
+			return;
+		}
+
+		u = Normalize(Cross(up, w));
+		v = Normalize(Cross(w, u));
+	}
+
+} RT_Camera;
+
+/*struct RT_Program {
 	cl::Device device;
 	cl::Context context;
 	cl::CommandQueue queue;
@@ -111,7 +200,7 @@ struct RT_Program {
 		//ret = clReleaseDevice(device);
 		status = clReleaseCommandQueue(queue);
 		status = clReleaseContext(context);*/
-	}
+	/*}
 
 	void BildProgram()
 	{
@@ -121,6 +210,92 @@ struct RT_Program {
 			std::cerr << "Error during conpilation OpenCl code: "
 				<< status << std::endl;
 		}
+	}
+};*/
+
+class Kernel 
+{
+private:
+	cl_kernel kernel;
+	std::map<char*, cl_mem> memObjects;
+
+public:
+	Kernel(const Program &p, const char *kernelName)
+	{
+		cl_int status;
+		kernel = clCreateKernel(p.program, kernelName, &status);
+		/*se houver tratar erro*/
+	}
+
+	Kernel setMemObject(const Program &p, cl_mem_flags flag, size_t size, char *nameObj)
+	{
+		cl_int status;
+		if (memObjects.find(nameObj) == memObjects.end())
+		{
+			memObjects[nameObj] = clCreateBuffer(p.context, flag, size, nullptr, &status);
+		}
+		/*se houver tratar erro*/
+
+		return *this;
+	}
+
+	cl_kernel getKernel() const
+	{
+		return kernel;
+	}
+
+	cl_mem getMemObject(char *name) 
+	{
+		if (memObjects.find(name) == memObjects.end())
+		{
+			std::cerr << "Objeto informado nao existe" << std::endl;
+		}
+		return memObjects[name];
+	}
+
+	Kernel setArgument(unsigned int id, size_t size, const void *value)
+	{
+		cl_int status;
+		status = clSetKernelArg(kernel, id, size, value);
+		/*se houver tratar erro*/
+		return *this;
+	}
+
+	Kernel WriteBuffer(const Program &p, size_t size, char *name, const void *value)
+	{
+		cl_int status;
+		status = clEnqueueWriteBuffer(p.queue, getMemObject(name), CL_TRUE, 0, size, value, 0, nullptr, nullptr);
+		/*se houver tratar erro*/
+		return *this;
+	}
+
+	Kernel ReadBuffer(const Program &p, size_t size, char *name, void *value)
+	{
+		cl_int status;
+		status = clEnqueueReadBuffer(p.queue, getMemObject(name), CL_TRUE, 0, size, value, 0, nullptr, nullptr);
+		/*se houver tratar erro*/
+		return *this;
+	}
+
+	Kernel NDRangeKernel(const Program &p, const size_t *globalItemSize, const size_t *localItemSize)
+	{
+		cl_int status;
+		status = clEnqueueNDRangeKernel(p.queue, kernel, 1, nullptr, globalItemSize, localItemSize, 0, nullptr, nullptr);
+		/*se houver tratar erro*/
+		return *this;
+	}
+
+	~Kernel()
+	{
+		cl_int status;
+		status = clReleaseKernel(kernel);
+
+		for (std::map<char*, cl_mem>::iterator i = memObjects.begin(); i != memObjects.end(); i++)
+		{
+			status |= clReleaseMemObject(i->second);
+		}
+		memObjects.clear();
+		/*se houver tratar erro*/
 	}
 };
 #endif//__CONFIG_H__

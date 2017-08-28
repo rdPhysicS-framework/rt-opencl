@@ -6,9 +6,9 @@
 
 #define RANDMAX 0x7FFF
 
-#define INFINITE 1000000000.0
+#define INFINITE 1000000.0f
 
-#define EPSILON 0.0001
+#define EPSILON 0.0001f
 
 #define RMASK 0x000000FF
 #define GMASK 0x0000FF00
@@ -56,9 +56,9 @@ typedef struct
  *----------------------------------------------------------------------------------------------*/
 
 inline RT_Mat4f create(float a, float b, float c, float d,
-						  float e, float f, float g, float h,
-						  float k, float l, float m, float n,
-						  float o, float p, float q, float r)
+					   float e, float f, float g, float h,
+					   float k, float l, float m, float n,
+					   float o, float p, float q, float r)
 {
 	RT_Mat4f mt;
 	mt.m[0][0] = a; mt.m[0][1] = b; mt.m[0][2] = c; mt.m[0][3] = d;
@@ -520,5 +520,3 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
  {
 	return (r->o + (r->d * t));
  }
-
-

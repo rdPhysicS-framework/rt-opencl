@@ -1,4 +1,4 @@
-typedef struct
+typedef struct __attribute__((aligned))
 {
 	RT_Vec3f position;
 	RT_Vec3f color;
@@ -24,14 +24,19 @@ typedef struct
 
 typedef struct
 {
+	RT_Vec3f point;
 	RT_Vec3f normal;
-	float dist;
+	//float dist;
+
+	RT_Material material;
 } RT_Plane;
 
 typedef struct
 {
 	RT_Vec3f position;
 	RT_Vec3f size;
+
+	RT_Material material;
 } RT_Box;
 
 typedef struct 
@@ -44,6 +49,7 @@ typedef struct
 	RT_Material material;
 	RT_Ray ray;
 	int depth;
+	RT_Vec3f dir;
 } RT_Result;
 
 typedef struct
@@ -53,3 +59,26 @@ typedef struct
 	RT_Vec2f sp;
 	//RT_SScoord coord;
 } RT_ViewPlane;
+
+ typedef struct
+{ 
+	RT_Vec3f u;
+	RT_Vec3f v;
+	RT_Vec3f w;
+} UVW;
+
+typedef struct
+{ 
+	/*position*/
+	RT_Vec3f eye;
+	RT_Vec3f lookAt;
+	RT_Vec3f up;
+
+	float viewPlaneDistance;
+	float zoom;
+
+	float rollAngle;
+	float exposureTime;
+
+	RT_Vec3f u, v, w;
+} RT_Camera;

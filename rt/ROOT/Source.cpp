@@ -176,20 +176,42 @@ int Save(const int *image, const int w, const int h)
 	return 0;
 }
 
+void setScene(RT_Plane *planes)
+{
+	planes[0] = { { 0, -324, 0 }, {  0,  1,  0 }, { { 0.4f, 0.3f, 0.3f }, 0.2f, 0.7f, 0.5f, 25.0f } };
+	planes[1] = { { 0, 0, 2419 }, {  0,  0, -1 }, { { 0.6f, 0.5f, 0.5f }, 0.2f, 1.0f, 0.8f, 25.f } };
+	planes[2] = { {-1296, 0, 0 }, {  1,  0,  0 }, { { 0.5f, 0.6f, 0.6f }, 0.2f, 1.0f, 0.8f, 25.0f } };
+	planes[3] = { { 1296, 0, 0 }, { -1,  0,  0 }, { { 0.5f, 0.6f, 0.6f }, 0.2f, 1.0f, 0.8f, 25.0f } };
+	planes[4] = { { 0, 800, 0 },  {  0, -1,  0 },  { { 0.7f, 0.7f, 0.7f }, 0.2f, 1.0f, 0.8f, 25.0f } };
+}
+
+void printPlanes(RT_Plane *planes, int numPlanes)
+{
+	std::cout << std::endl;
+	for (int i = 0; i < numPlanes; i++)
+	{
+		std::cout << "normal: " << planes[i].normal.x << " - " << planes[i].normal.y << " - "<< planes[i].normal.z << std::endl;;
+		std::cout << "point: " << planes[i].point.x << " - " << planes[i].point.y << " - " << planes[i].point.z << std::endl;;
+		//std::cout << "distance: " << planes[i].dist << std::endl;
+		std::cout << "color: " << planes[i].material.color.x << " - " << planes[i].material.color.y << " - " << planes[i].material.color.z << std::endl;
+		std::cout << "ambient: " << planes[i].material.ambient << std::endl;
+		std::cout << "diffuse: " << planes[i].material.diffuse << std::endl;
+		std::cout << "specular: " << planes[i].material.specular << std::endl;
+		std::cout << "intensity: " << planes[i].material.intensity << std::endl;
+		std::cout << std::endl;
+	}
+}
+
 void setSpheres(RT_Sphere *spheres)
 {
-	spheres[0] = { {  162,  54, 432 }, 216, { { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 1.0f} };
-	spheres[1] = { { -540, -86, 432 }, 270, { { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 20.0f } };
-	/*spheres[2] = { { 640, 54, 432 }, 200,{ { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 20.0f } };
-	spheres[3] = { { 162, 300, 432 }, 150,{ { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 20.0f } };
-	spheres[4] = { { -540, 386, 432 }, 200,{ { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 20.0f } };
-	spheres[5] = { { 700, -300, 432 }, 150,{ { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 20.0f } };*/
+	spheres[0] = { {  162,  54, 432 }, 216, { { 0.6f, 0.6f, 0.6f }, 0.2f, 0.7f, 0.8f, 1.0f} };
+	spheres[1] = { { -540, -86, 432 }, 270, { { 0.7f, 0.7f, 1.0f }, 0.2f, 0.7f, 0.8f, 1.0f } };
 }
 
 void setLights(RT_Light *lights)
 {
-	lights[0] = { {  162, -756, 432 }, { 0.6f, 0.6f, 0.7f }, 1.0f };
-	lights[1] = { { -540, -756, 432  }, { 0.5f, 0.8f, 0.8f }, 1.0f };
+	lights[0] = { {  162, 756, 432 }, { 0.6f, 0.6f, 0.7f }, 1.0f };
+	lights[1] = { { -540, 756, 432  }, { 0.5f, 0.8f, 0.8f }, 1.0f };
 }
 
 int main(int argc, char **argv)
@@ -199,11 +221,34 @@ int main(int argc, char **argv)
 	program.BildProgram();
 
 	/*input*/
+	//paredes
+	const int numPlanes = 5;
+	RT_Plane planes[numPlanes];
+	setScene(planes);
+
 	const int sizeSpheres = 2;
 	RT_Sphere spheres[sizeSpheres];
 	setSpheres(spheres);
+
+	const int numBox = 1;
+	RT_Box box[numBox] = { { {0, -324, 270}, {324, 162, 324},
+				   { {0.7f, 0.7f, 1.0f}, 0.2f, 0.7f, 0.2f, 20.0f} } };
+
 	/*dados do cavas*/
 	RT_ViewPlane vp = { WIDTH_CANVAS, HEIGHT_CANVAS, { 1, 1 } };
+	/*dados da camera*/
+	/*RT_Camera camera = { { 0, 0, -270 },
+						 { 0, 0, 0 },
+						 { 0, 1, 0 },
+						  600, 1.f, 0, 1,
+						 {},{},{} };*/
+	RT_Camera camera = { {-702, -108, -270}, 
+						 {-540, -100, 0}, 
+						 {0, 1, 0}, 
+						  800, 1.0f, 0, 1, 
+						 {}, {}, {} };
+	camera.computeUVW();
+
 	/*dados da luz*/
 	const int sizeLights = 2;
 	RT_Light lights[sizeLights];
@@ -212,33 +257,52 @@ int main(int argc, char **argv)
 	/*output*/
 	const int sizeBuffer = WIDTH_CANVAS * HEIGHT_CANVAS;
 	int *bufferImage = new int[sizeBuffer];
-	
+
 	cl_int status;
 
-	cl_kernel kernel = clCreateKernel(program.program, "render2", &status);
+	cl_kernel kernel = clCreateKernel(program.program, "render", &status);
 
-	cl_mem mem_vp = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(RT_ViewPlane), nullptr, &status);
+	cl_mem mem_vp = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_ViewPlane), nullptr, &status);
 	/*se houver, tratar erro*/
-	cl_mem mem_lights = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(RT_Light)*sizeLights, nullptr, &status);
+	cl_mem mem_camera = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Camera), nullptr, &status);
 	/*se houver, tratar erro*/
-	cl_mem mem_spheres = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(RT_Sphere)*sizeSpheres, nullptr, &status);
+	cl_mem mem_lights = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Light)*sizeLights, nullptr, &status);
 	/*se houver, tratar erro*/
-	cl_mem mem_bfImage = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(int)*sizeBuffer, nullptr, &status);
+	cl_mem mem_planes = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Plane)*numPlanes, nullptr, &status);
 	/*se houver, tratar erro*/
+	cl_mem mem_spheres = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Sphere)*sizeSpheres, nullptr, &status);
+	/*se houver, tratar erro*/
+	cl_mem mem_boxs = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Box)*numBox, nullptr, &status);
+	/*se houver, tratar erro*/
+	cl_mem mem_bfImage = clCreateBuffer(program.context, CL_MEM_WRITE_ONLY, sizeof(int)*sizeBuffer, nullptr, &status);
+	/*se houver, tratar erro*/
+	//cl_mem mem_temp = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(float)*2, nullptr, &status);
 
 	status = clEnqueueWriteBuffer(program.queue, mem_vp, CL_TRUE, 0, sizeof(RT_ViewPlane), &vp, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
+	status = clEnqueueWriteBuffer(program.queue, mem_camera, CL_TRUE, 0, sizeof(RT_Camera), &camera, 0, nullptr, nullptr);
+	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_lights, CL_TRUE, 0, sizeof(RT_Light)*sizeLights, lights, 0, nullptr, nullptr);
+	/*se houver, tratar erro*/
+	status = clEnqueueWriteBuffer(program.queue, mem_planes, CL_TRUE, 0, sizeof(RT_Plane)*numPlanes, planes, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_spheres, CL_TRUE, 0, sizeof(RT_Sphere)*sizeSpheres, spheres, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
+	status = clEnqueueWriteBuffer(program.queue, mem_boxs, CL_TRUE, 0, sizeof(RT_Box)*numBox, box, 0, nullptr, nullptr);
+	/*se houver, tratar erro*/
 
-	status  = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&mem_vp);
-	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&mem_lights);
-	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&mem_spheres);
-	status |= clSetKernelArg(kernel, 3, sizeof(const int), (void*)&sizeLights);
-	status |= clSetKernelArg(kernel, 4, sizeof(const int), (void*)&sizeSpheres);
-	status |= clSetKernelArg(kernel, 5, sizeof(cl_mem), (void*)&mem_bfImage);
+	status  = clSetKernelArg(kernel, 0, sizeof(cl_mem),    (void*)&mem_vp);
+	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem),    (void*)&mem_camera);
+	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem),    (void*)&mem_lights);
+	status |= clSetKernelArg(kernel, 3, sizeof(cl_mem),    (void*)&mem_planes);
+	status |= clSetKernelArg(kernel, 4, sizeof(cl_mem),    (void*)&mem_spheres);
+	status |= clSetKernelArg(kernel, 5, sizeof(cl_mem),    (void*)&mem_boxs);
+	status |= clSetKernelArg(kernel, 6, sizeof(const int), (void*)&sizeLights);
+	status |= clSetKernelArg(kernel, 7, sizeof(const int), (void*)&numPlanes);
+	status |= clSetKernelArg(kernel, 8, sizeof(const int), (void*)&sizeSpheres);
+	status |= clSetKernelArg(kernel, 9, sizeof(const int), (void*)&numBox);
+	status |= clSetKernelArg(kernel, 10, sizeof(cl_mem),   (void*)&mem_bfImage);
+	//status |= clSetKernelArg(kernel, 8, sizeof(cl_mem),    (void*)&mem_temp);
 	/*se houver, tratar erro*/
 
 	//status = clEnqueueTask(program.queue, kernel, 0, nullptr, nullptr);
@@ -261,16 +325,29 @@ int main(int argc, char **argv)
 	/*se houver, tratar erro*/
 
 	status = clEnqueueReadBuffer(program.queue, mem_bfImage, CL_TRUE, 0, sizeof(int)*sizeBuffer, bufferImage, 0, nullptr, nullptr);
+	//status = clEnqueueReadBuffer(program.queue, mem_temp, CL_TRUE, 0, sizeof(float)*2, t, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
+	//std::cout << "t: " << t[0] << ", tmin: " << t[1] << std::endl;
+
+	//printPlanes(planes2, numPlanes);
+	/*std::cout << "color: " << l[0].color.x << " - " << l[0].color.y << " - " << l[0].color.z << std::endl;
+	std::cout << "position: " << l[0].position.x << " - " << l[0].position.y << " - " << l[0].position.z << std::endl;
+	std::cout << "position: " << l[0].ls << std::endl;
+	std::cout << "color: " << l[1].color.x << " - " << l[1].color.y << " - " << l[1].color.z << std::endl;
+	std::cout << "position: " << l[1].position.x << " - " << l[1].position.y << " - " << l[1].position.z << std::endl;
+	std::cout << "position: " << l[1].ls << std::endl;*/
 
 	status = clReleaseKernel(kernel);
 	status |= clReleaseMemObject(mem_vp);
+	status |= clReleaseMemObject(mem_camera);
 	status |= clReleaseMemObject(mem_lights);
+	status |= clReleaseMemObject(mem_planes);
 	status |= clReleaseMemObject(mem_spheres);
 	status |= clReleaseMemObject(mem_bfImage);
+	//status |= clReleaseMemObject(mem_temp);
 	/*se houver, tratar erro*/
 
-	status = Save(bufferImage, 1920, 1080);
+	status = Save(bufferImage, WIDTH_CANVAS, HEIGHT_CANVAS);
 	if (status != CL_SUCCESS)
 		std::cerr << "ERRO ao salvar a imagem\n";
 
