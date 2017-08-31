@@ -157,9 +157,9 @@ namespace RT
 		}
 
 		inline Mat4f Ortho(const float left, const float right, const float bottom,
-						   const float top, const float near, const float far)
+						   const float top, const float _near, const float _far)
 		{
-			return Mat4f().Ortho(left, right, bottom, top, near, far);
+			return Mat4f().Ortho(left, right, bottom, top, _near, _far);
 		}
 
 		inline  Mat4f Perspective(const Vec4f &parameters)
@@ -168,9 +168,9 @@ namespace RT
 		}
 
 		inline Mat4f Perspective(const float fovy, const float aspect,
-								 const float near, const float far)
+								 const float _near, const float _far)
 		{
-			return Mat4f().Perspective(fovy, aspect, near, far);
+			return Mat4f().Perspective(fovy, aspect, _near, _far);
 		}
 
 		inline Mat4f LookAt(const Vec3f &eye, const Vec3f &center, const Vec3f &up)

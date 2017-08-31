@@ -8,7 +8,7 @@ RT::Regular::Regular(const unsigned int numSamples) :
 
 void RT::Regular::GenerateSamples()
 {
-	int n = (int)sqrt(numSamples);
+	int n = (int)sqrt((float)numSamples);
 
 	for (int i = 0; i < numSets; i++)
 	{

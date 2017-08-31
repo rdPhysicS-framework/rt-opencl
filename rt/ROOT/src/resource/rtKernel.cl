@@ -11,6 +11,7 @@ inline void DisplayPixel(const int x,
 
 __kernel void render(__constant RT_ViewPlane *viewPlane,
 					 __constant RT_Camera *camera,
+					 __constant RT_Point2f *samples,
 					 __global const RT_Light *lights,
 					 __global const RT_Plane *planes,
 				     __global const RT_Sphere *spheres,
@@ -19,10 +20,12 @@ __kernel void render(__constant RT_ViewPlane *viewPlane,
 					 const int numPlanes, 
 					 const int numSpheres, 
 					 const int numBox,
-					 __global int *bufferImage )
+					 const int numSp,
+					 __global int *bufferImage)
 {
 	RT_Vec2f s = viewPlane->sp / camera->zoom;
-	unsigned int id = get_global_id(0);
+	unsigned int id = get_global_id(0);//get_group_id(0);
+	
 	unsigned int x = id % viewPlane->width;
 	unsigned int y = id / viewPlane->width;
 	

@@ -44,6 +44,18 @@ typedef float2 RT_Vec2f;
 typedef float3 RT_Vec3f;
 typedef float4 RT_Vec4f;
 
+typedef union
+{ 
+	struct{ float x, y };
+	float s[2];
+} RT_Point2f;
+
+typedef union
+{ 
+	struct{ float x, y, z };
+	float s[3];
+} RT_Point3f;
+
 typedef struct
 {
 	float m[4][4];

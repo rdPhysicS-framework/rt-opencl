@@ -30,7 +30,7 @@ RT_Vec3f Shade(__global const RT_Light *lights,
 			   const int numBox)
 {
 	RT_Vec3f wo = ray->d;
-	RT_Vec3f color = (r->material.color * r->material.ambient);// * (RT_Vec3f)(1.5f);
+	RT_Vec3f color = (r->material.color * r->material.ambient) * (RT_Vec3f)(0.8f);
 
 	for(int i = 0; i < numLights; i++)
 	{

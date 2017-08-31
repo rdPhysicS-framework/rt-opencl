@@ -20,24 +20,44 @@ namespace RT
 		std::vector<RT::Vec3f> hemisphereSamples;
 		std::vector<RT::Vec3f> sphereSamples;
 
+		virtual void GenerateSamples() = 0;
 	public:
-		Sampler(unsigned int numSamples, 
-			   unsigned int numSets = 83);
+		Sampler(const unsigned int numSamples, 
+			    const unsigned int numSets = 83);
 
 		virtual ~Sampler();
-
-		inline void SetNumSamples(const unsigned int _numSamples)
-		{
-			numSamples = _numSamples;
-		}
 
 		inline void SetNumSets(const unsigned int _numSets)
 		{
 			numSets = _numSets;
 		}
 
+		inline const std::vector<RT::Vec2f> &GetSamples() const
+		{
+			return samples;
+		}
+
+		inline const std::vector<int> &GetShuffledSamples() const
+		{
+			return shuffledIndices;
+		}
+
+		inline const std::vector<RT::Vec2f> &GetDiscSamples() const
+		{
+			return discSamples;
+		}
+
+		inline const std::vector<RT::Vec3f> &GetHemisphereSamples() const
+		{
+			return hemisphereSamples;
+		}
+
+		inline const std::vector<RT::Vec3f> &GetSphereSamples() const
+		{
+			return sphereSamples;
+		}
+
 		//virtual Sampler *Clone() = 0;
-		virtual void GenerateSamples() = 0;
 
 		void ShuffleXcoordinates();
 		void ShuffleYcoordinates();

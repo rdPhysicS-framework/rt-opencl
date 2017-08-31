@@ -2,7 +2,7 @@
 #include <algorithm>
 
 RT::Sampler::Sampler(unsigned int numSamples, 
-				   unsigned int numSets) :
+				     unsigned int numSets) :
 	numSamples(numSamples), 
 	numSets(numSets),
 	count(0), jump(0)

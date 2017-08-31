@@ -1,5 +1,5 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef __RT_UTIL_H__
+#define __RT_UTIL_H__
 
 #include<cmath>
 
@@ -27,4 +27,4 @@
 	#define RT_TO_RAD  (RT_PI/RT_ANGLE)
 #endif //RT_TO_RAD
 
-#endif //__UTIL_H__
+#endif //__RT_UTIL_H__

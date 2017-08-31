@@ -5,11 +5,13 @@
 
 namespace RT
 {
-	class MultiJittered : Sampler
+	class MultiJittered : public Sampler
 	{
+	private:
+		virtual void GenerateSamples();
+
 	public:
 		MultiJittered(const unsigned int numSamples = 1);
-		virtual void GenerateSamples();
 	};
 }
 

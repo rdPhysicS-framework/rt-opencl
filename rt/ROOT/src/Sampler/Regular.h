@@ -7,11 +7,11 @@ namespace RT
 {
 	class Regular : public Sampler
 	{
+	private:
+		virtual void GenerateSamples();
+
 	public:
 		Regular(const unsigned int numSamples = 1);
-
-		//virtual Sampler *Clone();
-		virtual void GenerateSamples();
 	};
 
 }
