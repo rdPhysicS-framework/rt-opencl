@@ -1,11 +1,11 @@
-typedef struct __attribute__((aligned))
+typedef struct __attribute__((package))
 {
 	RT_Vec3f position;
 	RT_Vec3f color;
 	float ls;
 } RT_Light;
 
-typedef struct
+typedef struct __attribute__((package))
 {
 	RT_Vec3f color;
 	float ambient;//RT_Lambertian
@@ -14,7 +14,7 @@ typedef struct
 	float intensity;
 } RT_Material;
 
-typedef struct
+typedef struct __attribute__((package))
 {
 	RT_Vec3f center;
 	float radius;
@@ -22,7 +22,7 @@ typedef struct
 	RT_Material material;
 } RT_Sphere;
 
-typedef struct
+typedef struct __attribute__((package))
 {
 	RT_Vec3f point;
 	RT_Vec3f normal;
@@ -31,7 +31,7 @@ typedef struct
 	RT_Material material;
 } RT_Plane;
 
-typedef struct
+typedef struct __attribute__((package))
 {
 	RT_Vec3f position;
 	RT_Vec3f size;
@@ -39,7 +39,7 @@ typedef struct
 	RT_Material material;
 } RT_Box;
 
-typedef struct 
+typedef struct __attribute__((package))
 {
 	bool hit;
 	float t;
@@ -52,7 +52,7 @@ typedef struct
 	RT_Vec3f dir;
 } RT_Result;
 
-typedef struct
+typedef struct __attribute__((package))
 {
 	int width;
 	int height;
@@ -60,14 +60,14 @@ typedef struct
 	//RT_SScoord coord;
 } RT_ViewPlane;
 
- typedef struct
+ typedef struct __attribute__((package))
 { 
 	RT_Vec3f u;
 	RT_Vec3f v;
 	RT_Vec3f w;
 } UVW;
 
-typedef struct
+typedef struct __attribute__((package))
 { 
 	/*position*/
 	RT_Vec3f eye;
@@ -82,3 +82,29 @@ typedef struct
 
 	RT_Vec3f u, v, w;
 } RT_Camera;
+
+typedef struct __attribute__((package))
+{ 
+	RT_Vec3f color;
+	float ls;
+} RT_AmbientLight;
+
+typedef struct __attribute__((package))
+{ 
+	/*data of the lights*/
+	int numLights;
+
+	/*data of the objects*/
+	int numSpheres;
+	int numPlanes;
+	int numBox;
+
+	/*data of the samples*/
+	int numSamples;
+	int numSets;
+	int jump;
+	ulong count;
+	ulong numShuffledIndices;
+	/*seed random*/
+	ulong seed;
+} RT_DataScene;

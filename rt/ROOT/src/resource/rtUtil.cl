@@ -4,6 +4,9 @@
 #define PI2 (PI * 2)
 #define INVPI 1.0 / PI
 
+#define MULTIPLIER 0x5DEECE66DL
+#define ADDEND 0xBL
+#define MASK (1L << 48) - 1
 #define RANDMAX 0x7FFF
 
 #define INFINITE 1000000.0f
@@ -426,24 +429,18 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
 
  typedef struct
  {
-	float rf, gf, bf, af;
-	int ri, gi, bi, ai;
+	int r, g, b, a;
 	int rgba;
 
  } RT_Color;
 
- inline RT_Color CreatePixelColori(int r, int g, int b, int a)
+ inline RT_Color CreatePixelColor(int r, int g, int b, int a)
  {
 	RT_Color c;
-	c.ri = r;
-	c.gi = g;
-	c.bi = b;
-	c.ai = a;
-
-	c.rf = r/255.f;
-	c.gf = g/255.f;
-	c.bf = b/255.f;
-	c.af = a/255.f;
+	c.r = r;
+	c.g = g;
+	c.b = b;
+	c.a = a;
 
 	c.rgba = (((r & 0xFF) << RSHIFT) |
 			  ((g & 0xFF) << GSHIFT) |
@@ -455,31 +452,26 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
 
  inline RT_Color CreatePixelColorf(float r, float g, float b, float a)
  {
-	return CreatePixelColori(r*255, g*255, b*255, a*255);
+	return CreatePixelColor(r*255, g*255, b*255, a*255);
  }
 
  inline RT_Color CreatePixelColorv4(const RT_Vec4f c)
  {
-	return CreatePixelColori(c.x*255, c.y*255, c.z*255, c.w*255);
+	return CreatePixelColor(c.x*255, c.y*255, c.z*255, c.w*255);
  }
 
  inline RT_Color CreatePixelColorv3(const RT_Vec3f c)
  {
-	return CreatePixelColori(c.x*255, c.y*255, c.z*255, 255);
+	return CreatePixelColor(c.x*255, c.y*255, c.z*255, 255);
  }
 
- inline RT_Color CreatePixelColori32(const int rgba)
+ inline RT_Color CreatePixelColor32(const int rgba)
  {
 	RT_Color c;
-	c.ri = (rgba & RMASK) >> RSHIFT;
-	c.gi = (rgba & GMASK) >> GSHIFT;
-	c.bi = (rgba & BMASK) >> BSHIFT;
-	c.ai = (rgba & AMASK) >> ASHIFT;
-
-	c.rf = c.ri/255.0f;
-	c.gf = c.gi/255.0f;
-	c.bf = c.bi/255.0f;
-	c.af = c.ai/255.0f;
+	c.r = (rgba & RMASK) >> RSHIFT;
+	c.g = (rgba & GMASK) >> GSHIFT;
+	c.b = (rgba & BMASK) >> BSHIFT;
+	c.a = (rgba & AMASK) >> ASHIFT;
 
 	c.rgba = rgba;
 
@@ -508,6 +500,60 @@ inline RT_Vec3f _clamp(const RT_Vec3f *v, const float min, const float max)
 	c->z = (c->z < 0)? 0 : (c->z > 1)? 1 : c->z;
  }
 
+/*void AccumulateColor(const int x, 
+					 const int y, 
+					 const int w,
+					 const RT_Color *pc, 
+					 __global int *bufferImage)
+{ 
+	int invR = w - x - 1;
+	int i = (y * w) + invR;
+	*(bufferImage + i) = pc->rgba;
+
+	RT_Color c;
+	c.r = (rgba & RMASK) >> RSHIFT;
+	c.g = (rgba & GMASK) >> GSHIFT;
+	c.b = (rgba & BMASK) >> BSHIFT;
+	c.a = (rgba & AMASK) >> ASHIFT;
+
+	c.rgba = rgba;
+}*/
+/*----------------------------------------------------------------------------------------------
+*
+* Random
+* java.util.Random
+*----------------------------------------------------------------------------------------------*/
+
+uint next(ulong *seed, int bits)
+{
+	*seed = (*seed * MULTIPLIER + ADDEND) & MASK;
+	return (uint)(*seed >> (48 - bits));
+}
+
+float randFloat(ulong *seed)
+{
+	return next(seed, 24) / (float)(1UL << 24);
+}
+
+int randInt(ulong *seed)
+{
+	return next(seed, 31);
+}
+
+int randInt2(uint *seed, int bound)
+{
+	int r = next(seed, 31);
+	int m = bound == 0? bound : bound - 1;
+
+	if ((bound & m) == 0)
+		r = (int)((bound * (int)r) >> 31);
+	else
+	{
+		for (int i = r; i - (r = i % bound) + m < 0; i = next(seed, 31));
+	}
+
+	return r;
+}
 /*----------------------------------------------------------------------------------------------
  *
  * Ray

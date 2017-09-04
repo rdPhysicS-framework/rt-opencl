@@ -24,15 +24,12 @@ RT_Vec3f Shade(__global const RT_Light *lights,
 			   __global const RT_Box *box,
 			   const RT_Ray *ray,
 			   const RT_Result *r,
-			   const int numLights,
-			   const int numPlanes, 
-			   const int numSpheres,
-			   const int numBox)
+			   __global RT_DataScene *world)
 {
 	RT_Vec3f wo = ray->d;
 	RT_Vec3f color = (r->material.color * r->material.ambient) * (RT_Vec3f)(0.8f);
 
-	for(int i = 0; i < numLights; i++)
+	for(int i = 0; i < world->numLights; i++)
 	{
 		RT_Light l = lights[i];
 		RT_Vec3f wi = Direction(&l, r);
@@ -43,7 +40,7 @@ RT_Vec3f Shade(__global const RT_Light *lights,
 			/*inShadow*/
 			if(!InShadow(&l, planes, spheres, box, 
 				CreateRay(r->lhitPoint, wi), 
-			    numPlanes, numSpheres, numBox)     )
+			    world))
 			{ 
 				color += (Lambertian_F(r) + 
 						  GlossySpecular_F(r, &wi, &wo)) *
@@ -66,19 +63,14 @@ RT_Vec3f TraceRay(__global const RT_Light *lights,
 				  __global const RT_Sphere *spheres,
 				  __global const RT_Box *box,
 				  const RT_Ray *ray,
-				  const int numLights, 
-				  const int numPlanes,
-				  const int numSpheres,
-				  const int numBox)
+				  __global RT_DataScene *world)
 {
-	RT_Result r = Hit(planes, spheres, box, ray,
-					  numPlanes, numSpheres, numBox);
+	RT_Result r = Hit(planes, spheres, box, ray, world);
 
 	if(r.hit)
 	{
 		r.ray = *ray;
-		return Shade(lights, planes, spheres, box, ray, &r, 
-					 numLights, numPlanes, numSpheres, numBox);
+		return Shade(lights, planes, spheres, box, ray, &r, world);
 	}
 
 	return (RT_Vec3f)(0.0f);

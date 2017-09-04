@@ -27,11 +27,8 @@ bool InShadow(const RT_Light *l,
 			  __global const RT_Sphere *spheres,
 			  __global const RT_Box *box, 
 			  const RT_Ray ray,
-			  const int numPlanes,
-			  const int numSpheres,
-			  const int numBox)
+			  __global RT_DataScene *world)
 {
 	return ShadowHit(planes, spheres, box, &ray, 
-					 numPlanes, numSpheres, numBox,
-					 length(l->position - ray.o));
+					 world, length(l->position - ray.o));
 }

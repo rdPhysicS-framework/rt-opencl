@@ -29,9 +29,7 @@ RT_Result Hit(__global const RT_Plane *planes,
 			  __global const RT_Sphere *spheres,
 			  __global const RT_Box *box, 
 			  const RT_Ray *ray,
-			  const int numPlanes,
-			  const int numSpheres,
-			  const int numBox)
+			  __global RT_DataScene *world)
 {
 	RT_Result r = CreateResult();
 	RT_Vec3f normal;
@@ -40,7 +38,7 @@ RT_Result Hit(__global const RT_Plane *planes,
 	float tmin = INFINITE;
 	float t = 0;
 	
-	for(int i = 0; i < numPlanes; i++)
+	for(int i = 0; i < world->numPlanes; i++)
 	{
 		RT_Plane p = planes[i];
 		if(Plane_Hit(&p, ray, &t, &r) && t < tmin)
@@ -53,7 +51,7 @@ RT_Result Hit(__global const RT_Plane *planes,
 		}
 	}
 
-	for(int i = 0; i < numSpheres; i++)
+	for(int i = 0; i < world->numSpheres; i++)
 	{
 		RT_Sphere s = spheres[i];
 		if(Sphere_Hit(&s, ray, &t, &r) && t < tmin)
@@ -66,7 +64,7 @@ RT_Result Hit(__global const RT_Plane *planes,
 		}	
 	}
 
-	for(int i = 0; i < numBox; i++)
+	for(int i = 0; i < world->numBox; i++)
 	{
 		RT_Box b = box[i];
 		if(Box_Hit(&b, ray, &t, &r) && t < tmin)
@@ -93,14 +91,12 @@ bool ShadowHit(__global const RT_Plane *planes,
 			   __global const RT_Sphere *spheres,
 			   __global const RT_Box *box, 
 			   const RT_Ray *ray,
-			   const int numPlanes,
-			   const int numSpheres,
-			   const int numBox,
+			   __global RT_DataScene *world,
 			   float tmin)
 {
 	float t = 0;
 	
-	for(int i = 0; i < numPlanes; i++)
+	for(int i = 0; i < world->numPlanes; i++)
 	{
 		RT_Plane p = planes[i];
 		if(Plane_ShadowHit(&p, ray, &t) && t < tmin)
@@ -109,7 +105,7 @@ bool ShadowHit(__global const RT_Plane *planes,
 		}
 	}
 
-	for(int i = 0; i < numSpheres; i++)
+	for(int i = 0; i < world->numSpheres; i++)
 	{
 		RT_Sphere s = spheres[i];
 		if(Sphere_ShadowHit(&s, ray, &t) && t < tmin)
@@ -118,7 +114,7 @@ bool ShadowHit(__global const RT_Plane *planes,
 		}
 	}
 
-	for(int i = 0; i < numBox; i++)
+	for(int i = 0; i < world->numBox; i++)
 	{
 		RT_Box b = box[i];
 		if(Box_ShadowHit(&b, ray, &t) && t < tmin)

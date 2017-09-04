@@ -6,37 +6,50 @@ inline void DisplayPixel(const int x,
 { 
 	int invR = w - x - 1;
 	int i = (y * w) + invR;
-	*(bufferImage + i) = pc->rgba;
+	*(bufferImage + i) += pc->rgba;
 }
 
 __kernel void render(__constant RT_ViewPlane *viewPlane,
 					 __constant RT_Camera *camera,
 					 __constant RT_Point2f *samples,
+					 __constant ulong *shuffledIndices,
 					 __global const RT_Light *lights,
 					 __global const RT_Plane *planes,
 				     __global const RT_Sphere *spheres,
 					 __global const RT_Box *box, 
-					 const int numLights,
-					 const int numPlanes, 
-					 const int numSpheres, 
-					 const int numBox,
-					 const int numSp,
-					 __global int *bufferImage)
+					 __global RT_DataScene *world,
+					 ///const int numLights,
+					 ///const int numPlanes, 
+					 ///const int numSpheres, 
+					 ///const int numBox,
+					 ///const int numSp,
+					 ///const int numShIn,
+					 __global int *bufferImage )
 {
 	RT_Vec2f s = viewPlane->sp / camera->zoom;
-	unsigned int id = get_global_id(0);//get_group_id(0);
+	uint id = get_global_id(0);
 	
-	unsigned int x = id % viewPlane->width;
-	unsigned int y = id / viewPlane->width;
+	uint x = id % viewPlane->width;
+	uint y = id / viewPlane->width;
 	
-	RT_Vec2f pp = (RT_Vec2f)( s.x * (x - 0.5f * viewPlane->width),
-							 -s.y * (y - 0.5f * viewPlane->height));
+	RT_Vec3f cf = (RT_Vec3f)(0.0f);
+	//for(int i = 0; i < world->numSamples; i++)
+	//{ 
+		//world->seed = 1;
+		RT_Point2f sp = SampleUnitSquare(samples, shuffledIndices, world);
+		RT_Vec2f pp = (RT_Vec2f)( s.x * (x - 0.5f * viewPlane->width) + sp.x,
+								 -s.y * (y - 0.5f * viewPlane->height) + sp.y);
 
-	RT_Ray ray = CreateRay(camera->eye, GetDirectionRayCam(&pp, camera));
+		RT_Ray ray = CreateRay(camera->eye, GetDirectionRayCam(&pp, camera));
 
-	RT_Vec3f cf = TraceRay(lights, planes, spheres, box, &ray, 
-						   numLights, numPlanes, numSpheres, numBox);
+		cf = TraceRay(lights, planes, spheres, box, &ray, world);
+	//}
+	//cf /= world->numSamples;
 	Saturate(&cf);
+	/*ulong seed = world->seed;
+	int rnd = randInt(&seed);
+	world->seed = seed;*/
+	//CreatePixelColor32(randInt2(&world->seed, (uint)0xFFFFFFFF));
 	RT_Color pc = CreatePixelColorv3(cf);
 	DisplayPixel(x, y, viewPlane->width, &pc, bufferImage);
 }

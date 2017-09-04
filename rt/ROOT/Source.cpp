@@ -5,6 +5,8 @@
 #include "src\assets\Util.h"
 #include "src\assets\Info.h"
 #include "src\Sampler\Regular.h"
+#include "src\Sampler\MultiJittered.h"
+#include <time.h>
 
 static cl_int SetPlatforms(std::vector<cl_platform_id> &platforms)
 {
@@ -124,6 +126,7 @@ static Program CreateProgram()
 	prog.program = CreateClProgram(prog.context, 
 								  { PATH"rtUtil.cl",
 									PATH"rtStruct.cl",
+									PATH"rtSampler.cl",
 									PATH"rtGeometricObject.cl",
 									PATH"rtWorld.cl",
 									PATH"rtLights.cl",
@@ -217,10 +220,9 @@ void setLights(RT_Light *lights)
 
 int main(int argc, char **argv)
 {
-	std::cout << 1 << 16 << std::endl;
 	Program program = CreateProgram();
 	DetailsProgram(program);
-	program.BildProgram();
+	program.BuildProgram();
 
 	/*input*/
 	//paredes
@@ -244,10 +246,10 @@ int main(int argc, char **argv)
 						 { 0, 1, 0 },
 						  600, 1.f, 0, 1,
 						 {},{},{} };*/
-	RT_Camera camera = { {-702, -108, -270}, 
-						 {-540, -100, 0}, 
-						 {0, 1, 0}, 
-						  800, 1.5f, 0, 1, 
+	RT_Camera camera = { {-702, -108, -270},
+						 {-540, -100, 0},
+						 {0, 1, 0},
+						  800, 1.5f, 0, 1,
 						 {}, {}, {} };
 	camera.computeUVW();
 
@@ -255,13 +257,20 @@ int main(int argc, char **argv)
 	const int sizeLights = 2;
 	RT_Light lights[sizeLights];
 	setLights(lights);
-	
-	RT::Regular sp(4);
+
+	RT::Regular sp(1);
 	const int sp_size = sp.GetSamples().size();
+	const int shuffledIndicesSize = sp.GetShuffledIndices().size();
+	/*dados da cena*/
+	RT_DataScene world = { sizeLights, sizeSpheres,
+						  numPlanes, numBox,
+						  sp.GetNumSamples(), sp.GetNumSets(),
+						  0, 0, sp.GetShuffledIndices().size(),
+					      time(NULL) };
 
 	/*output*/
 	const int sizeBuffer = WIDTH_CANVAS * HEIGHT_CANVAS;
-	int *bufferImage = new int[sizeBuffer];
+	int *bufferImage = (int*)calloc(sizeof(int), sizeBuffer);//new int[sizeBuffer];
 
 	//const int sp_size = sp.GetSamples().size();
 	//RT::Vec2f *outSp = new RT::Vec2f[sp_size];
@@ -276,6 +285,8 @@ int main(int argc, char **argv)
 	/*se houver, tratar erro*/
 	cl_mem mem_sp = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT::Vec2f)*sp_size, nullptr, &status);
 	/*se houver, tratar erro*/
+	cl_mem mem_shuffledIndices = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(cl_int)*shuffledIndicesSize, nullptr, &status);
+	/*se houver, tratar erro*/
 	cl_mem mem_lights = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Light)*sizeLights, nullptr, &status);
 	/*se houver, tratar erro*/
 	cl_mem mem_planes = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Plane)*numPlanes, nullptr, &status);
@@ -284,15 +295,19 @@ int main(int argc, char **argv)
 	/*se houver, tratar erro*/
 	cl_mem mem_boxs = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_Box)*numBox, nullptr, &status);
 	/*se houver, tratar erro*/
+	cl_mem mem_dataScene = clCreateBuffer(program.context, CL_MEM_READ_ONLY, sizeof(RT_DataScene), nullptr, &status);
+	/*se houver, tratar erro*/
 	cl_mem mem_bfImage = clCreateBuffer(program.context, CL_MEM_WRITE_ONLY, sizeof(int)*sizeBuffer, nullptr, &status);
 	/*se houver, tratar erro*/
-	cl_mem mem_temp = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(RT::Vec2f)*sp_size, nullptr, &status);
+	//cl_mem mem_temp = clCreateBuffer(program.context, CL_MEM_READ_WRITE, sizeof(RT::Vec2f)*sp_size, nullptr, &status);
 
 	status = clEnqueueWriteBuffer(program.queue, mem_vp, CL_TRUE, 0, sizeof(RT_ViewPlane), &vp, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_camera, CL_TRUE, 0, sizeof(RT_Camera), &camera, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_sp, CL_TRUE, 0, sizeof(RT::Vec2f)*sp_size, sp.GetSamples().data(), 0, nullptr, nullptr);
+	/*se houver, tratar erro*/
+	status = clEnqueueWriteBuffer(program.queue, mem_shuffledIndices, CL_TRUE, 0, sizeof(cl_int)*shuffledIndicesSize, sp.GetShuffledIndices().data(), 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_lights, CL_TRUE, 0, sizeof(RT_Light)*sizeLights, lights, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
@@ -302,21 +317,19 @@ int main(int argc, char **argv)
 	/*se houver, tratar erro*/
 	status = clEnqueueWriteBuffer(program.queue, mem_boxs, CL_TRUE, 0, sizeof(RT_Box)*numBox, box, 0, nullptr, nullptr);
 	/*se houver, tratar erro*/
+	status = clEnqueueWriteBuffer(program.queue, mem_dataScene, CL_TRUE, 0, sizeof(RT_DataScene), &world, 0, nullptr, nullptr);
+	/*se houver, tratar erro*/
 
-	status  = clSetKernelArg(kernel, 0, sizeof(cl_mem),    (void*)&mem_vp);
-	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem),    (void*)&mem_camera);
-	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem),    (void*)&mem_sp);
-	status |= clSetKernelArg(kernel, 3, sizeof(cl_mem),    (void*)&mem_lights);
-	status |= clSetKernelArg(kernel, 4, sizeof(cl_mem),    (void*)&mem_planes);
-	status |= clSetKernelArg(kernel, 5, sizeof(cl_mem),    (void*)&mem_spheres);
-	status |= clSetKernelArg(kernel, 6, sizeof(cl_mem),    (void*)&mem_boxs);
-	status |= clSetKernelArg(kernel, 7, sizeof(const int), (void*)&sizeLights);
-	status |= clSetKernelArg(kernel, 8, sizeof(const int), (void*)&numPlanes);
-	status |= clSetKernelArg(kernel, 9, sizeof(const int), (void*)&sizeSpheres);
-	status |= clSetKernelArg(kernel, 10, sizeof(const int), (void*)&numBox);
-	status |= clSetKernelArg(kernel, 11, sizeof(const int), (void*)&sp_size);
-	status |= clSetKernelArg(kernel, 12, sizeof(cl_mem),    (void*)&mem_bfImage);
-	//status |= clSetKernelArg(kernel, 13, sizeof(cl_mem),    (void*)&mem_temp);
+	status =  clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&mem_vp);
+	status |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&mem_camera);
+	status |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&mem_sp);
+	status |= clSetKernelArg(kernel, 3, sizeof(cl_mem), (void*)&mem_shuffledIndices);
+	status |= clSetKernelArg(kernel, 4, sizeof(cl_mem), (void*)&mem_lights);
+	status |= clSetKernelArg(kernel, 5, sizeof(cl_mem), (void*)&mem_planes);
+	status |= clSetKernelArg(kernel, 6, sizeof(cl_mem), (void*)&mem_spheres);
+	status |= clSetKernelArg(kernel, 7, sizeof(cl_mem), (void*)&mem_boxs);
+	status |= clSetKernelArg(kernel, 8, sizeof(cl_mem), (void*)&mem_dataScene);
+	status |= clSetKernelArg(kernel, 9, sizeof(cl_mem), (void*)&mem_bfImage);
 	/*se houver, tratar erro*/
 
 	//status = clEnqueueTask(program.queue, kernel, 0, nullptr, nullptr);
@@ -325,8 +338,9 @@ int main(int argc, char **argv)
 	status = clGetDeviceInfo(program.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, 0, nullptr, &paramSize);
 	size_t *ret = new size_t[paramSize];
 	status = clGetDeviceInfo(program.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, paramSize, ret, nullptr);
-	size_t globalItemSize = sizeBuffer;
-	size_t localItemSize = 1;
+	size_t offSet = 0;
+	size_t globalItemSize = sizeBuffer;// { WIDTH_CANVAS, HEIGHT_CANVAS };
+	size_t localItemSize = *ret/2; //{ (int)sqrt((float)*ret), (int)sqrt((float)*ret) };
 
 	std::cout << "Kernel work group size: " << localItemSize << std::endl;
 
@@ -334,12 +348,23 @@ int main(int argc, char **argv)
 		//globalItemSize = (globalItemSize / localItemSize + 1) * localItemSize;
 
 	std::cout << "Global groupe size: " << globalItemSize << std::endl;
-	
-	status = clEnqueueNDRangeKernel(program.queue, kernel, 1, nullptr, &globalItemSize, &localItemSize, 0, nullptr, nullptr);
+
+	cl_event rtEnd;
+	status = clEnqueueNDRangeKernel(program.queue, kernel, 1, &offSet, &globalItemSize, &localItemSize, 0, nullptr, &rtEnd);
 	/*se houver, tratar erro*/
-	clFlush(program.queue);
-	status = clEnqueueReadBuffer(program.queue, mem_bfImage, CL_TRUE, 0, sizeof(int)*sizeBuffer, bufferImage, 0, nullptr, nullptr);
-	if (status != CL_SUCCESS) 
+	//clFlush(program.queue);
+	cl_event rbEnd;
+	status = clEnqueueReadBuffer(program.queue, mem_bfImage, CL_TRUE, 0, sizeof(int)*sizeBuffer, bufferImage, 0, nullptr, &rbEnd);
+
+	/*ulong rtStart = 0, rtKEnd = 0, rtCopyEnd = 0;
+	clGetEventProfilingInfo(rtEnd, CL_PROFILING_COMMAND_QUEUED, sizeof(ulong), &rtStart, nullptr);
+	clGetEventProfilingInfo(rtEnd, CL_PROFILING_COMMAND_END, sizeof(ulong), &rtKEnd, nullptr);
+	clGetEventProfilingInfo(rbEnd, CL_PROFILING_COMMAND_END, sizeof(ulong), &rtCopyEnd, nullptr);
+
+	printf("\nRaytracing: %f", ((rtKEnd - rtStart) / 1000000.0f));
+	printf("\nCopy BufferImage: %f\n", ((rtCopyEnd - rtKEnd) / 1000000.0f));*/
+
+	if (status != CL_SUCCESS)
 	{
 		bufferImage = nullptr;
 	}
@@ -369,6 +394,8 @@ int main(int argc, char **argv)
 	std::cout << "position: " << l[1].position.x << " - " << l[1].position.y << " - " << l[1].position.z << std::endl;
 	std::cout << "position: " << l[1].ls << std::endl;*/
 
+	//status = clReleaseEvent(rtEnd);
+	//status |= clReleaseEvent(rbEnd);
 	status = clReleaseKernel(kernel);
 	status |= clReleaseMemObject(mem_vp);
 	status |= clReleaseMemObject(mem_camera);
@@ -383,7 +410,7 @@ int main(int argc, char **argv)
 	if (status != CL_SUCCESS)
 		std::cerr << "ERRO ao salvar a imagem\n";
 
-	if(bufferImage)
+	if (bufferImage)
 		delete bufferImage;
 
 	system("pause");

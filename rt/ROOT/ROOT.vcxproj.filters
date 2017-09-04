@@ -22,6 +22,7 @@
     <None Include="src\resource\rtTracer.cl" />
     <None Include="src\resource\rtStruct.cl" />
     <None Include="src\resource\rtGeometricObject.cl" />
+    <None Include="src\resource\rtSampler.cl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\resource\rtLights.cl" />
@@ -53,9 +54,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Sampler\Regular.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,6 +67,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Sampler\MultiJittered.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

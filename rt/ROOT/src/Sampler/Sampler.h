@@ -32,12 +32,22 @@ namespace RT
 			numSets = _numSets;
 		}
 
+		inline int GetNumSets() const
+		{
+			return numSets;
+		}
+
+		inline int GetNumSamples() const
+		{
+			return numSamples;
+		}
+
 		inline const std::vector<RT::Vec2f> &GetSamples() const
 		{
 			return samples;
 		}
 
-		inline const std::vector<int> &GetShuffledSamples() const
+		inline const std::vector<int> &GetShuffledIndices() const
 		{
 			return shuffledIndices;
 		}

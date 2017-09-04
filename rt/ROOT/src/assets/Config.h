@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <ostream>
+#include <sstream>
 #include <map>
 
 #ifdef APPLE
@@ -25,6 +26,9 @@
 
 typedef cl_float3 RT_Vec3f;
 typedef cl_float2 RT_Vec2f;
+
+typedef unsigned __int32 uint;
+typedef unsigned __int64 ulong;
 
 inline RT_Vec3f operator+(const RT_Vec3f &v1, const RT_Vec3f &v2)
 {
@@ -87,7 +91,7 @@ struct Program {
 		status = clReleaseContext(context);
 	}
 
-	void BildProgram()
+	void BuildProgram()
 	{
 		cl_int status;
 		status = clBuildProgram(program, 1, &device, 
@@ -186,6 +190,27 @@ typedef struct
 	}
 
 } RT_Camera;
+
+typedef struct
+{
+	/*data of the lights*/
+	int numLights;
+
+	/*data of the objects*/
+	int numSpheres;
+	int numPlanes;
+	int numCubes;
+
+	/*data of the samples*/
+	int numSamples;
+	int numSets;
+	int jump;
+	ulong count;
+	ulong numShuffledIndices;
+
+	/*seed random*/
+	ulong seed;
+} RT_DataScene;
 
 /*struct RT_Program {
 	cl::Device device;
